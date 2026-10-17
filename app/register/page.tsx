@@ -16,6 +16,10 @@ export const metadata: Metadata = {
   description: "Create your Aidify account.",
 };
 
+// Reads the session and system settings at request time —
+// can never prerender (cacheComponents blocking route).
+export const instant = false;
+
 export default async function RegisterPage() {
   if (!isSupabaseConfigured()) {
     return (

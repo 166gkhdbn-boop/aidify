@@ -12,6 +12,10 @@ export const metadata: Metadata = {
   title: "Admin console",
 };
 
+// Every /admin/* page requires the administrator role (requireRole), so
+// static prerendering is impossible — opt out via connection()
+// (cacheComponents mode does not allow the `dynamic` segment config).
+
 const ADMIN_NAV: NavEntry[] = [
   {
     label: "Manage",
@@ -54,6 +58,11 @@ const ADMIN_NAV: NavEntry[] = [
  * calls requireRole() itself and every DAL function / server action enforces
  * the role server-side. Hiding UI is never treated as authorization.
  */
+// Every /admin/* page requires the administrator role (requireRole), so these
+// routes can never prerender — mark them blocking/dynamic (the cacheComponents
+// replacement for `dynamic = "force-dynamic"`).
+export const instant = false;
+
 export default async function AdminLayout({
   children,
 }: {

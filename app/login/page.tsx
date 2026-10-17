@@ -15,6 +15,10 @@ export const metadata: Metadata = {
   description: "Sign in to your Aidify workspace.",
 };
 
+// Reads searchParams (?next=) and the session at request time —
+// can never prerender (cacheComponents blocking route).
+export const instant = false;
+
 interface LoginPageProps {
   searchParams: Promise<{ next?: string; auth_error?: string }>;
 }

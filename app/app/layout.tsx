@@ -15,6 +15,10 @@ export const metadata: Metadata = {
   title: "App",
 };
 
+// Every /app/* page requires an authenticated session (requireUser), so
+// static prerendering is impossible — opt out via connection()
+// (cacheComponents mode does not allow the `dynamic` segment config).
+
 const NAV: NavEntry[] = [
   { href: "/app", label: "Dashboard", icon: "LayoutDashboard" },
   { href: "/app/configs", label: "Configurations", icon: "FileJson2" },
@@ -42,6 +46,11 @@ const NAV: NavEntry[] = [
  * User-app layout: authenticated shell (sidebar + topbar) behind the cosmic
  * background. Every /app/* page inherits requireUser() from here.
  */
+// Every /app/* page requires an authenticated session (requireUser), so these
+// routes can never prerender — mark them blocking/dynamic (the cacheComponents
+// replacement for `dynamic = "force-dynamic"`).
+export const instant = false;
+
 export default async function AppLayout({
   children,
 }: {
