@@ -6,6 +6,7 @@ import {
   getProxyUser,
   listProtocolSettings,
   buildUserLinks,
+  DEFAULT_PROXY_HOST,
   proxyUserStatus,
   formatBytes,
   usedBytes,
@@ -51,7 +52,8 @@ export default async function UserDetailPage({
 
   const status = proxyUserStatus(user);
   const meta = STATUS_META[status];
-  const links = buildUserLinks(user, protocols);
+  const host = (protocols.proxy_host || "").trim() || DEFAULT_PROXY_HOST;
+  const links = buildUserLinks(user, protocols, host);
   const used = usedBytes(user);
   const days = daysUntilExpiry(user.expires_at);
 

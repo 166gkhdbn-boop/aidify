@@ -25,8 +25,16 @@ import { dbError, getAdminClient, parseOr } from "./helpers";
 
 export const GB = 1073741824;
 
-/** Host that serves the proxy protocols (Edge Function). */
+/** Legacy host that serves the proxy protocols (Supabase Edge Function). */
 export const PROXY_HOST = "rdcnkkhqangukrgfehdj.supabase.co";
+
+/** Default proxy host (Wasmer Edge). Configurable via panel_settings.proxy_host. */
+export const DEFAULT_PROXY_HOST = "vless-test.wasmer.app";
+
+/** True when the host is the legacy Supabase Edge Function (3 protocols, /functions/v1/proxy/* paths). */
+export function isLegacyProxyHost(host: string): boolean {
+  return host === PROXY_HOST || host.endsWith(".supabase.co");
+}
 
 export interface ProxyUserRow {
   id: string;
@@ -309,6 +317,39 @@ export async function setProtocolSetting(
   return ok({ ok: true });
 }
 
+/** Read the configured proxy host (panel_settings.proxy_host), falling back to default. */
+export async function getProxyHost(): Promise<string> {
+  await requireUser();
+  const admin = getAdminClient();
+  if ("error" in admin) return DEFAULT_PROXY_HOST;
+  const { data } = await admin.client
+    .from("panel_settings")
+    .select("value")
+    .eq("key", "proxy_host")
+    .maybeSingle();
+  const v = (data?.value ?? "").trim();
+  return v || DEFAULT_PROXY_HOST;
+}
+
+/** Set the proxy host used when building user config links. */
+export async function setProxyHost(
+  host: string,
+): Promise<ApiResponse<{ ok: true }>> {
+  await requireUser();
+  const clean = (host.trim().toLowerCase().replace(/^https?:\/\//, "").split("/")[0] ?? "").trim();
+  if (!/^[a-z0-9]([a-z0-9.-]*[a-z0-9])?(:\d+)?$/.test(clean) || clean.length > 253) {
+    return err(ApiErrorCode.VALIDATION, "Enter a valid hostname, e.g. vless-test.wasmer.app");
+  }
+  const admin = getAdminClient();
+  if ("error" in admin) return admin.error;
+  const { error } = await admin.client.from("panel_settings").upsert(
+    { key: "proxy_host", value: clean, updated_at: new Date().toISOString() },
+    { onConflict: "key" },
+  );
+  if (error) return dbError(error);
+  return ok({ ok: true });
+}
+
 /* ---------------- config links ---------------- */
 
 export interface UserLinks {
@@ -321,9 +362,13 @@ export interface UserLinks {
 export function buildUserLinks(
   user: ProxyUserRow,
   protocols: Record<string, string>,
-  host: string = PROXY_HOST,
+  host: string = DEFAULT_PROXY_HOST,
 ): UserLinks {
   const enc = encodeURIComponent(user.name);
+  // Legacy Supabase host serves 3 protocols under /functions/v1/proxy/*.
+  // Other hosts (e.g. Wasmer Edge) serve VLESS-only at /ws.
+  const legacy = isLegacyProxyHost(host);
+  const vlessPath = legacy ? "/functions/v1/proxy/ws" : "/ws";
   let vless: string | null = null;
   let trojan: string | null = null;
   let xhttp: string | null = null;
@@ -337,12 +382,12 @@ export function buildUserLinks(
       fp: "randomized",
       type: "ws",
       host,
-      path: "/functions/v1/proxy/ws",
+      path: vlessPath,
     });
     vless = `vless://${user.uuid}@${host}:443?${p}#${enc}%20(VLESS)`;
     all.push(vless);
   }
-  if (protocols.trojan_enabled === "true" && user.trojan_password) {
+  if (legacy && protocols.trojan_enabled === "true" && user.trojan_password) {
     const p = new URLSearchParams({
       security: "tls",
       sni: host,
@@ -354,7 +399,7 @@ export function buildUserLinks(
     trojan = `trojan://${encodeURIComponent(user.trojan_password)}@${host}:443?${p}#${enc}%20(Trojan)`;
     all.push(trojan);
   }
-  if (protocols.xhttp_enabled === "true") {
+  if (legacy && protocols.xhttp_enabled === "true") {
     const p = new URLSearchParams({
       encryption: "none",
       security: "tls",

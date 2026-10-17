@@ -66,3 +66,9 @@ export async function setProtocolSettingAction(key: string, value: boolean) {
   if (limited) return limited;
   return runAction(() => dal.setProtocolSetting(key, value));
 }
+
+export async function setProxyHostAction(host: string) {
+  const limited = await writeLimit("proxy-users:protocol");
+  if (limited) return limited;
+  return runAction(() => dal.setProxyHost(host));
+}

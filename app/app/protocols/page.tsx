@@ -15,7 +15,7 @@ export default async function ProtocolsPage() {
     <div>
       <PageHeader
         title="Protocols"
-        description="Which proxy protocols are served. Only protocols that work on Edge Functions can be enabled."
+        description="Which proxy protocols are served, and which server the config links point to."
       />
       <ProtocolsClient initial={map} />
     </div>
