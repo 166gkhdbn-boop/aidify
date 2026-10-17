@@ -424,3 +424,29 @@ export const userPreferencesPatchSchema = z
 
 export type UserPreferences = z.infer<typeof userPreferencesSchema>;
 export type UserPreferencesPatch = z.infer<typeof userPreferencesPatchSchema>;
+
+/* ------------------------------------------------------------------ */
+/* Proxy users (panel_users)                                            */
+/* ------------------------------------------------------------------ */
+
+/** Data limit in gigabytes as entered in the UI. */
+const dataLimitGbSchema = z
+  .number()
+  .positive("Data limit must be positive")
+  .max(1_000_000, "Data limit is too large");
+
+export const createProxyUserSchema = z.object({
+  name: nameSchema,
+  data_limit_gb: dataLimitGbSchema.nullable().optional(),
+  expires_at: z.string().datetime({ offset: true }).nullable().optional(),
+});
+
+export const updateProxyUserSchema = z.object({
+  name: nameSchema.optional(),
+  enabled: z.boolean().optional(),
+  data_limit_gb: dataLimitGbSchema.nullable().optional(),
+  expires_at: z.string().datetime({ offset: true }).nullable().optional(),
+});
+
+export type CreateProxyUserInput = z.infer<typeof createProxyUserSchema>;
+export type UpdateProxyUserInput = z.infer<typeof updateProxyUserSchema>;

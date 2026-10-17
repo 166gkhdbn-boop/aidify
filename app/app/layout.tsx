@@ -21,17 +21,8 @@ export const metadata: Metadata = {
 
 const NAV: NavEntry[] = [
   { href: "/app", label: "Dashboard", icon: "LayoutDashboard" },
-  { href: "/app/configs", label: "Configurations", icon: "FileJson2" },
-  { href: "/app/collections", label: "Collections", icon: "FolderKanban" },
-  { href: "/app/analytics", label: "Analytics", icon: "BarChart3" },
-  { href: "/app/activity", label: "Activity", icon: "Activity" },
-  {
-    href: "/app/notifications",
-    label: "Notifications",
-    icon: "Bell",
-    badge: <NotificationsNavBadge />,
-  },
-  { href: "/app/support", label: "Support", icon: "LifeBuoy" },
+  { href: "/app/users", label: "Users", icon: "Users" },
+  { href: "/app/protocols", label: "Protocols", icon: "Radio" },
   {
     label: "Account",
     items: [
